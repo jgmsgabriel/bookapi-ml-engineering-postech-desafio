@@ -4,6 +4,12 @@ from flask import Flask
 
 def create_app():
     app = Flask(__name__)
+    
+    # Carregar configurações no app.config para uso global
+    app.config["BOOKS_CSV_PATH"] = Config.BOOKS_CSV_PATH
+    app.config["JWT_SECRET"] = Config.JWT_SECRET
+    app.config["JWT_ALGORITHM"] = Config.JWT_ALGORITHM
+    app.config["JWT_EXP_DELTA_SECONDS"] = Config.JWT_EXP_DELTA_SECONDS
 
     swagger_config = {
         "headers": [],
@@ -18,29 +24,25 @@ def create_app():
         "static_url_path": "/flasgger_static",
         "swagger_ui": True,
         "specs_route": "/docs/",
-        # uiversion 3 = Swagger UI v3 renderizando um spec Swagger 2.0 (ok)
-        "uiversion": Config.SWAGGER["uiversion"],
+        "uiversion": 3,
     }
 
     swagger_template = {
-        "swagger": "2.0",   # <-- use APENAS Swagger 2.0
+        "swagger": "2.0",
         "info": {
             "title": Config.SWAGGER["title"],
             "version": "1.0.0",
-            "description": "Catálogo API Scrape Books",
+            "description": "Catálogo API Scrape Books - Sistema de gerenciamento de livros com autenticação JWT",
         },
-        # Definição do Bearer para funcionar com `security: [Bearer: []]`
         "securityDefinitions": {
             "Bearer": {
                 "type": "apiKey",
                 "name": "Authorization",
                 "in": "header",
-                "description": "JWT no formato: Bearer <token>",
+                "description": "Token JWT de autenticação. Formato: Bearer {seu_token_jwt}",
             }
         },
-        # Opcional: segurança global (pode manter por-endpoint nos docstrings se preferir)
-        # "security": [{"Bearer": []}],
-        "basePath": "/",  # ajuste se sua app estiver sob subcaminho
+        "basePath": "/",
         "schemes": ["https", "http"],
         "consumes": ["application/json"],
         "produces": ["application/json"],

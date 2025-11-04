@@ -7,7 +7,7 @@ from .utilidades import (
     create_token,
     token_required,
     scrape_book_details,
-    load_books_df,   # usamos sempre esta função
+    load_books_df,
 )
 
 logger = logging.getLogger("app")
@@ -17,9 +17,50 @@ def register_routes(app):
     @app.route("/api/v1/auth/login", methods=["POST"])
     def login():
         """
-        Login
+        Login - Autentica usuário e retorna token JWT
         ---
-        tags: [Auth]
+        tags:
+          - Auth
+        consumes:
+          - application/json
+        produces:
+          - application/json
+        parameters:
+          - in: body
+            name: body
+            description: Credenciais de autenticação
+            required: true
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                  example: admin
+                  description: Nome de usuário
+                password:
+                  type: string
+                  example: secret
+                  description: Senha do usuário
+        responses:
+          200:
+            description: Login realizado com sucesso
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: Token JWT para autenticação nas próximas requisições
+          401:
+            description: Credenciais inválidas
+            schema:
+              type: object
+              properties:
+                error:
+                  type: string
+                  example: Credenciais inválidas
         """
         data = request.get_json(force=True)
         username = data.get("username")
@@ -36,10 +77,27 @@ def register_routes(app):
     @token_required
     def refresh_token():
         """
-        Renova o token JWT.
+        Renova o token JWT
         ---
-        tags: [Auth]
-        security: [Bearer: []]
+        tags:
+          - Auth
+        security:
+          - Bearer: []
+        responses:
+          200:
+            description: Token renovado com sucesso
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+          401:
+            description: Token inválido ou expirado
+            schema:
+              type: object
+              properties:
+                error:
+                  type: string
         """
         try:
             username = getattr(request, "user", None)
@@ -60,13 +118,39 @@ def register_routes(app):
             "message": "s2 Conexao estabelecida: True | Latência do amor: 0ms | Status: Eternamente apaixonado por você, te amo! Feliz 01 atrasado s2"
         })
 
-    # Mantido literal como no original (com dois pontos)
     @app.route("/api/v1/health:", methods=["GET"])
     def health():
         """
-        Healthcheck
+        Healthcheck - Verifica status da API e conexão com dados
         ---
-        tags: [Health]
+        tags:
+          - Health
+        responses:
+          200:
+            description: API funcionando normalmente
+            schema:
+              type: object
+              properties:
+                api_status:
+                  type: string
+                  example: ok
+                data_status:
+                  type: string
+                  example: connected
+                records:
+                  type: integer
+                  example: 1000
+          500:
+            description: Problema com os dados
+            schema:
+              type: object
+              properties:
+                api_status:
+                  type: string
+                data_status:
+                  type: string
+                records:
+                  type: integer
         """
         try:
             try:
@@ -98,10 +182,34 @@ def register_routes(app):
     @token_required
     def list_books():
         """
-        Lista todos os livros (array)
+        Lista todos os livros
         ---
-        tags: [Books]
-        security: [Bearer: []]
+        tags:
+          - Books
+        security:
+          - Bearer: []
+        responses:
+          200:
+            description: Lista de livros retornada com sucesso
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  title:
+                    type: string
+                  category:
+                    type: string
+                  price:
+                    type: number
+                  rating:
+                    type: integer
+                  detail_url:
+                    type: string
+          401:
+            description: Token ausente ou inválido
+          500:
+            description: Erro ao carregar dados
         """
         try:
             df = load_books_df()
@@ -116,10 +224,38 @@ def register_routes(app):
     @token_required
     def search_books():
         """
-        Busca por título e/ou categoria
+        Busca livros por título e/ou categoria
         ---
-        tags: [Books]
-        security: [Bearer: []]
+        tags:
+          - Books
+        security:
+          - Bearer: []
+        parameters:
+          - name: title
+            in: query
+            type: string
+            required: false
+            description: Buscar por título (case insensitive)
+            example: Python
+          - name: category
+            in: query
+            type: string
+            required: false
+            description: Buscar por categoria (case insensitive)
+            example: Fiction
+        responses:
+          200:
+            description: Livros encontrados
+            schema:
+              type: array
+              items:
+                type: object
+          400:
+            description: Parâmetros inválidos
+          401:
+            description: Token ausente ou inválido
+          500:
+            description: Erro ao buscar dados
         """
         try:
             df = load_books_df()
@@ -153,10 +289,23 @@ def register_routes(app):
     @token_required
     def list_categories():
         """
-        Lista categorias
+        Lista todas as categorias disponíveis
         ---
-        tags: [Categories]
-        security: [Bearer: []]
+        tags:
+          - Categories
+        security:
+          - Bearer: []
+        responses:
+          200:
+            description: Lista de categorias
+            schema:
+              type: array
+              items:
+                type: string
+          401:
+            description: Token ausente ou inválido
+          500:
+            description: Erro ao carregar dados
         """
         try:
             df = load_books_df()
@@ -172,10 +321,30 @@ def register_routes(app):
     @token_required
     def get_book(book_id: int):
         """
-        Detalhe por ID (índice do CSV)
+        Obtém detalhes de um livro específico pelo ID
         ---
-        tags: [Books]
-        security: [Bearer: []]
+        tags:
+          - Books
+        security:
+          - Bearer: []
+        parameters:
+          - name: book_id
+            in: path
+            type: integer
+            required: true
+            description: ID do livro (índice no CSV)
+            example: 0
+        responses:
+          200:
+            description: Detalhes do livro
+            schema:
+              type: object
+          404:
+            description: Livro não encontrado
+          401:
+            description: Token ausente ou inválido
+          500:
+            description: Erro ao buscar livro
         """
         try:
             df = load_books_df()
@@ -193,10 +362,30 @@ def register_routes(app):
     @token_required
     def get_book_sc(book_id: int):
         """
-        Enriquecimento por scraping (description/reviews)
+        Enriquece dados do livro com scraping (descrição e reviews)
         ---
-        tags: [Books]
-        security: [Bearer: []]
+        tags:
+          - Books
+        security:
+          - Bearer: []
+        parameters:
+          - name: book_id
+            in: path
+            type: integer
+            required: true
+            description: ID do livro para enriquecer dados
+            example: 0
+        responses:
+          200:
+            description: Livro com dados enriquecidos
+            schema:
+              type: object
+          404:
+            description: Livro não encontrado
+          401:
+            description: Token ausente ou inválido
+          500:
+            description: Erro ao fazer scraping
         """
         try:
             df = load_books_df()
@@ -220,10 +409,31 @@ def register_routes(app):
     @token_required
     def stats_overview():
         """
-        Estatísticas gerais
+        Estatísticas gerais dos livros
         ---
-        tags: [Stats]
-        security: [Bearer: []]
+        tags:
+          - Stats
+        security:
+          - Bearer: []
+        responses:
+          200:
+            description: Estatísticas gerais
+            schema:
+              type: object
+              properties:
+                total_books:
+                  type: integer
+                  example: 1000
+                average_price:
+                  type: number
+                  example: 25.50
+                rating_distribution:
+                  type: object
+                  example: {"1": 50, "2": 100, "3": 200, "4": 350, "5": 300}
+          401:
+            description: Token ausente ou inválido
+          500:
+            description: Erro ao calcular estatísticas
         """
         try:
             df = load_books_df()
@@ -247,10 +457,34 @@ def register_routes(app):
     @token_required
     def stats_by_category():
         """
-        Estatísticas por categoria
+        Estatísticas agrupadas por categoria
         ---
-        tags: [Stats]
-        security: [Bearer: []]
+        tags:
+          - Stats
+        security:
+          - Bearer: []
+        responses:
+          200:
+            description: Estatísticas por categoria
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  category:
+                    type: string
+                  total_books:
+                    type: integer
+                  avg_price:
+                    type: number
+                  min_price:
+                    type: number
+                  max_price:
+                    type: number
+          401:
+            description: Token ausente ou inválido
+          500:
+            description: Erro ao calcular estatísticas
         """
         try:
             df = load_books_df()
@@ -273,10 +507,23 @@ def register_routes(app):
     @token_required
     def top_rated_books():
         """
-        Livros com melhor rating
+        Lista livros com melhor avaliação
         ---
-        tags: [Books]
-        security: [Bearer: []]
+        tags:
+          - Books
+        security:
+          - Bearer: []
+        responses:
+          200:
+            description: Livros com melhor rating
+            schema:
+              type: array
+              items:
+                type: object
+          401:
+            description: Token ausente ou inválido
+          500:
+            description: Erro ao buscar livros
         """
         try:
             df = load_books_df()
@@ -293,10 +540,38 @@ def register_routes(app):
     @token_required
     def books_by_price_range():
         """
-        Filtra por faixa de preço
+        Filtra livros por faixa de preço
         ---
-        tags: [Books]
-        security: [Bearer: []]
+        tags:
+          - Books
+        security:
+          - Bearer: []
+        parameters:
+          - name: min
+            in: query
+            type: number
+            required: true
+            description: Preço mínimo
+            example: 10.00
+          - name: max
+            in: query
+            type: number
+            required: true
+            description: Preço máximo
+            example: 50.00
+        responses:
+          200:
+            description: Livros na faixa de preço especificada
+            schema:
+              type: array
+              items:
+                type: object
+          400:
+            description: Parâmetros obrigatórios ausentes
+          401:
+            description: Token ausente ou inválido
+          500:
+            description: Erro ao filtrar livros
         """
         try:
             df = load_books_df()
