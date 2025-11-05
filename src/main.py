@@ -110,15 +110,7 @@ def register_routes(app):
             logger.exception("Erro ao renovar token")
             return jsonify({"error": "Falha ao renovar token"}), 500
 
-    # ----- Root -----
-    @app.route("/")
-    def route_hello():
-        logger.info("API testada")
-        return jsonify({
-            "message": "s2 Conexao estabelecida: True | Latência do amor: 0ms | Status: Eternamente apaixonado por você, te amo! Feliz 01 atrasado s2"
-        })
-
-    @app.route("/api/v1/health:", methods=["GET"])
+    @app.route("/api/v1/health", methods=["GET"])
     def health():
         """
         Healthcheck - Verifica status da API e conexão com dados
