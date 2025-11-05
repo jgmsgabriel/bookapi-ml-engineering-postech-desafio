@@ -712,7 +712,7 @@ model.fit(X, y)
 - 🌐 **API em Produção**: https://dunstudio.com.br
 - 📝 **Swagger UI**: https://dunstudio.com.br/docs/
 - 💻 **Repositório GitHub**: https://github.com/jgmsgabriel/bookapi-ml-engineering-postech-desafio
-- 📹 **Vídeo de Apresentação**: [Link será adicionado]
+- 📹 **Vídeo de Apresentação**: https://youtu.be/NU3RSvxfLIc
 - 🎓 **Curso**: Pós-Graduação ML Engineering - FIAP
 
 ---
