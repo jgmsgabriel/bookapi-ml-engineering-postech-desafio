@@ -533,7 +533,7 @@ A API está deployada e operacional em:
 
 ## 🎬 Vídeo de Apresentação
 
-> 📹 **Link do vídeo será adicionado em breve**
+> 📹 https://youtu.be/NU3RSvxfLIc
 
 O vídeo inclui:
 - ✅ Demonstração técnica do projeto
